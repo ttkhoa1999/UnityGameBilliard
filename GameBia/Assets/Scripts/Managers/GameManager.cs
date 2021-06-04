@@ -15,7 +15,7 @@ namespace ThreeDPool.Managers
             JustCue = 1,
             ThreeBall = 3,
             SixBall = 6,
-            SevenBall,
+            NineBall= 9,
         }
 
         public enum GameState

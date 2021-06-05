@@ -7,8 +7,13 @@ namespace ThreeDPool.Controllers
 {
     class CueController : MonoBehaviour
     {
+        public GameObject gameObj = null;
+
         [SerializeField]
         private Transform _cueBall = null;
+
+        [SerializeField]
+        private Transform _cueHead = null;
 
         private float _defaultDistFromCueBall;
 
@@ -20,6 +25,8 @@ namespace ThreeDPool.Controllers
 
         private float _speed = 10.0f;
         private bool _cueReleasedToStrike = false;
+
+        private LineRenderer _line = null;
 
         private Vector3 _initialPos;
         private Vector3 _initialDir;
@@ -40,6 +47,8 @@ namespace ThreeDPool.Controllers
             EventManager.Subscribe(typeof(GameInputEvent).Name, OnGameInputEvent);
             EventManager.Subscribe(typeof(CueBallActionEvent).Name, OnCueBallEvent);
             EventManager.Subscribe(typeof(GameStateEvent).Name, OnGameStateEvent);
+
+            _line = GetComponent<LineRenderer>();
         }
 
         private void OnDestroy()
@@ -47,6 +56,46 @@ namespace ThreeDPool.Controllers
             EventManager.Unsubscribe(typeof(GameInputEvent).Name, OnGameInputEvent);
             EventManager.Unsubscribe(typeof(CueBallActionEvent).Name, OnCueBallEvent);
             EventManager.Unsubscribe(typeof(GameStateEvent).Name, OnGameStateEvent);
+        }
+
+        private void Update()
+        {
+            if(Input.GetKey(KeyCode.Mouse0))
+            {
+                _line.enabled = true;
+            }
+            else
+            {
+                _line.enabled = false;
+                return;
+            }
+
+            float distance;
+            Vector3 head = _cueHead.position;
+            head.y = _cueBall.position.y;
+
+            Vector3 direction = _cueBall.position - head;
+            direction.Normalize();
+
+            RaycastHit hit;
+            var layerMask = (1 << LayerMask.NameToLayer("Ball") | 1 << LayerMask.NameToLayer("Border"));
+
+            if (Physics.Raycast(_cueBall.position, direction, out hit, Mathf.Infinity, layerMask))
+            {
+                distance = Vector3.Distance(_cueBall.position, hit.point);
+            }
+            else
+            {
+                distance = 100f;
+            }
+
+            Vector3 forward = _cueHead.forward * distance;
+            forward.y = 0;
+
+            Vector3[] vertexPos = new Vector3[2] { _cueBall.position, _cueBall.position + forward };
+
+            _line.positionCount = 2;
+            _line.SetPositions(vertexPos);
         }
 
         private void OnGameInputEvent(object sender, IGameEvent gameEvent)

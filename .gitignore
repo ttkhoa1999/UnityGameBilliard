@@ -1,11 +1,3 @@
-[Aa]ssets/AssetStoreTools*
-[Bb]uild/
-[Ll]ibrary/
-[Ll]ocal[Cc]ache/
-[Oo]bj/
-[Tt]emp/
-[Uu]nityGenerated/
-
 # Visual Studio cache directory
 .vs/
 

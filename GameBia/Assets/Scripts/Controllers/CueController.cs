@@ -28,7 +28,7 @@ namespace ThreeDPool.Controllers
 
         public AudioSource audioStriked;
 
-        public float ForceGatheredToHit { get { return _forceGathered;  } }
+        public float ForceGatheredToHit { get { return (_forceGathered - _defaultDistFromCueBall) / _maxClampDist;  } }
 
         private void Start()
         {
@@ -56,10 +56,16 @@ namespace ThreeDPool.Controllers
             {
                 case GameInputEvent.States.HorizontalAxisMovement:
                     {
+                        float rotateSpeed = 20f;
+                        if(Input.GetKey(KeyCode.LeftShift))
+                        {
+                            rotateSpeed = 100f;
+                        }
+
                         if (_posToRot == Vector3.one)
-                            transform.RotateAround(_cueBall.position, Vector3.up, 20f * gameInputEvent.axisOffset * Time.deltaTime);
+                            transform.RotateAround(_cueBall.position, Vector3.up, rotateSpeed * gameInputEvent.axisOffset * Time.deltaTime);
                         else
-                            transform.RotateAround(_posToRot, Vector3.up, 20f * gameInputEvent.axisOffset * Time.deltaTime);
+                            transform.RotateAround(_posToRot, Vector3.up, rotateSpeed * gameInputEvent.axisOffset * Time.deltaTime);
                     }
                     break;
                 case GameInputEvent.States.VerticalAxisMovement:
@@ -70,6 +76,7 @@ namespace ThreeDPool.Controllers
                         var newPosition = transform.position + transform.forward * gameInputEvent.axisOffset;
 
                         _forceGathered = Vector3.Distance(_cueBall.position, newPosition);
+
                         if ((_forceGathered < _defaultDistFromCueBall + _maxClampDist) &&
                             _forceGathered > _defaultDistFromCueBall)
                         {

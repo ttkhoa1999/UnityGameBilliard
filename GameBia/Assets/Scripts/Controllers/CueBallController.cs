@@ -98,15 +98,35 @@ namespace ThreeDPool.Controllers
                     OnStriked(forceGatheredToHit);
                 }
             }
+
+            if(collider.gameObject.tag == "Hole")
+            {
+                var currPos = gameObject.transform.position;
+                gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                gameObject.transform.position = new Vector3(currPos.x, currPos.y, currPos.z);
+            }
+        }
+
+        private void OnTriggerExit(Collider collider)
+        {
+            if (BallType != CueBallType.White && collider.gameObject.tag == "Hole")
+            {
+                gameObject.GetComponent<MeshRenderer>().enabled = false;
+            }
         }
 
         private void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
             {
-                Debug.Log("Oncollision" + collision.gameObject.name);
-
                 GameManager.Instance.AddToBallHitOutList(this);
+            }
+
+            if(collision.gameObject.tag == "ColorBall")
+            {
+                var vector = gameObject.GetComponent<Rigidbody>().velocity;
+
+                gameObject.GetComponent<Rigidbody>().velocity = new Vector3(vector.x, vector.y, vector.z) * 1.13f;
             }
         }
 
@@ -142,6 +162,12 @@ namespace ThreeDPool.Controllers
             {
 
             }
+
+            var v = rigidbody.velocity.normalized;
+            if (rigidbody.velocity.magnitude > 1.5f && rigidbody.angularVelocity.magnitude < 1)
+            {
+                rigidbody.angularVelocity = new Vector3(v.z, 0, -v.x) * rigidbody.velocity.magnitude;
+            }
         }
 
         private void OnStriked(float forceGathered)
@@ -152,6 +178,8 @@ namespace ThreeDPool.Controllers
 
                 Rigidbody rigidBody = gameObject.GetComponent<Rigidbody>();
                 rigidBody.AddForce(Camera.main.transform.forward * _force * forceGathered, ForceMode.Force);
+
+                var rigidbody = gameObject.GetComponent<Rigidbody>();
             }
         }
 

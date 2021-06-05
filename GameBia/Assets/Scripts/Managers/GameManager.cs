@@ -15,7 +15,8 @@ namespace ThreeDPool.Managers
             JustCue = 1,
             ThreeBall = 3,
             SixBall = 6,
-            NineBall= 9,
+            NineBall = 9,
+            FifteenBall = 15,
         }
 
         public enum GameState
@@ -98,7 +99,10 @@ namespace ThreeDPool.Managers
         private bool IsGameComplete()
         {
             if (_ballsPocketed.Count() == (int)_gameType)
+            {
+                _ballsPocketed.ForEach(ball => ball.gameObject.GetComponent<MeshRenderer>().enabled = true);
                 return true;
+            }
 
             return false;
         }
@@ -153,7 +157,7 @@ namespace ThreeDPool.Managers
                     if (_ballsPocketed.Count() > 0)
                     {
                         var ballsCurrentlyPocketed = _ballsPocketed.Where(b => b.IsPocketedInPrevTurn == false);
-                        Debug.Log("Bi đã lọt lỗ" + ballsCurrentlyPocketed.Count());
+
                         if (ballsCurrentlyPocketed.Count() > 0)
                         {
                             currPlayer.CalculateScore(ballsCurrentlyPocketed.Count());

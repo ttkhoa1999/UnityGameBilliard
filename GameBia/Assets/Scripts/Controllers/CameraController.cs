@@ -71,13 +71,19 @@ namespace ThreeDPool.Controllers
             {
                 case GameInputEvent.States.HorizontalAxisMovement:
                     {
+                        float rotateSpeed = 20f;
+                        if (Input.GetKey(KeyCode.LeftShift))
+                        {
+                            rotateSpeed = 100f;
+                        }
+
                         if (_posToRot == Vector3.one)
                         {
-                            transform.RotateAround(_cueBall.position, Vector3.up, 20f * gameInputEvent.axisOffset * Time.deltaTime);
+                            transform.RotateAround(_cueBall.position, Vector3.up, rotateSpeed * gameInputEvent.axisOffset * Time.deltaTime);
                         }
                         else
                         {
-                            transform.RotateAround(_posToRot, Vector3.up, 20f * gameInputEvent.axisOffset * Time.deltaTime);
+                            transform.RotateAround(_posToRot, Vector3.up, rotateSpeed * gameInputEvent.axisOffset * Time.deltaTime);
                         }
                     }
                     break;

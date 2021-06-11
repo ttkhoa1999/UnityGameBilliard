@@ -14,6 +14,9 @@ namespace ThreeDPool.UIControllers
         private GameObject _pausePageGo;
 
         [SerializeField]
+        private GameObject _spinChoicePageGo;
+
+        [SerializeField]
         private VerticalLayoutGroup _playerGridGroup;
 
         [SerializeField]
@@ -36,8 +39,6 @@ namespace ThreeDPool.UIControllers
             EventManager.Subscribe(typeof(GameInputEvent).Name, OnGameInput);
             EventManager.Subscribe(typeof(ScoreUpdateEvent).Name, OnScoreUpdate);
             EventManager.Subscribe(typeof(GameStateEvent).Name, OnPlayerTurnChanged);
-
-
         }
 
         private void OnDestroy()
@@ -118,11 +119,13 @@ namespace ThreeDPool.UIControllers
         private void OnGameInput(object sender, IGameEvent gameEvent)
         {
             GameInputEvent gameInputEvent = (GameInputEvent)gameEvent;
-            switch(gameInputEvent.State)
+            switch (gameInputEvent.State)
             {
                 case GameInputEvent.States.Paused:
-                        OnPause();
-                    
+                    OnPause();
+                    break;
+                case GameInputEvent.States.SpinEffectChoice:
+                    OnSpinEffectChoice();
                     break;
             }
         }
@@ -139,7 +142,13 @@ namespace ThreeDPool.UIControllers
             _pausePageGo.SetActive(true);
             _quitButtonGo.SetActive(true);
             GameManager.Instance.OnPaused();
-            
+        }
+
+        private void OnSpinEffectChoice()
+        {
+            OnSpinEffectChosen(true);
+            _spinChoicePageGo.SetActive(true);
+            GameManager.Instance.OnSpinEffectChoice();
         }
 
         private void OnPlayPressed()
@@ -147,6 +156,13 @@ namespace ThreeDPool.UIControllers
             _pausePageGo.SetActive(false);
             audioPause.Stop();
             StartCoroutine(StartGame());
+        }
+
+        private void OnOKPressed()
+        {
+            OnSpinEffectChosen(false);
+            _spinChoicePageGo.SetActive(false);
+            StartCoroutine(ResumeGame());
         }
 
         private void OnQuitPressed()
@@ -194,6 +210,42 @@ namespace ThreeDPool.UIControllers
             audioBackground.Stop();
         }
 
+        private IEnumerator ResumeGame()
+        {
+            if (GameManager.Instance.CurrGameState == GameManager.GameState.Practise)
+            {
+                EventManager.Notify(typeof(GameStateEvent).Name, this, new GameStateEvent() { GameState = GameStateEvent.State.Play });
+            }
+
+            GameManager.Instance.OnGetSet();
+            yield return new WaitForSeconds(0.05f);
+
+            if (GameManager.Instance.PrevGameState == GameManager.GameState.Practise)
+            {
+                PlayerUIController[] playerUIControllers = _playerGridGroup.GetComponentsInChildren<PlayerUIController>();
+                if (playerUIControllers != null && playerUIControllers.Length > 0)
+                {
+                    foreach (var playerUIController in playerUIControllers)
+                        playerUIController.NameNScore.text = playerUIController.gameObject.name + " " + 0;
+                }
+
+                GameManager.Instance.OnPlay();
+
+                if (GameManager.Instance.NumOfTimesPlayed == 1)
+                {
+                    SetFirstPlayerToBreakShot();
+                }
+            }
+            else
+            {
+                GameManager.Instance.OnContinue();
+            }
+
+            _playerGridGroup.gameObject.SetActive(true);
+
+            audioBackground.Stop();
+        }
+
         private void SetFirstPlayerToBreakShot()
         {
             PlayerUIController[] playerUIControllers = _playerGridGroup.GetComponentsInChildren<PlayerUIController>();
@@ -211,6 +263,20 @@ namespace ThreeDPool.UIControllers
                 playerUIController.NameNScore.text = player.Name + " " + player.Score.ToString();
                 playerUIController.TurnMarker.enabled = false;
                 playerUIGo.transform.SetParent(_playerGridGroup.transform);
+            }
+        }
+
+        public void OnSpinEffectChosen(bool isChosen)
+        {
+            Camera spinEffectCamera = GameObject.Find("SpinEffectCamera").GetComponent<Camera>();
+
+            if (isChosen)
+            {
+                spinEffectCamera.rect = new Rect(0, 0, 1, 1);
+            }
+            else
+            {
+                spinEffectCamera.rect = new Rect(0.9f, 0.72f, 1, 1);
             }
         }
     }

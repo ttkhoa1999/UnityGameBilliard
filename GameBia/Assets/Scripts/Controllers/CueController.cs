@@ -60,7 +60,12 @@ namespace ThreeDPool.Controllers
 
         private void Update()
         {
-            if(Input.GetKey(KeyCode.Mouse0))
+            if (GameManager.Instance.CurrGameState == GameManager.GameState.GetSet ||
+                GameManager.Instance.CurrGameState == GameManager.GameState.Pause ||
+                GameManager.Instance.CurrGameState == GameManager.GameState.SpinEffectChoice)
+                return;
+
+            if (Input.GetKey(KeyCode.Mouse0))
             {
                 _line.enabled = true;
             }
@@ -106,7 +111,7 @@ namespace ThreeDPool.Controllers
                 case GameInputEvent.States.HorizontalAxisMovement:
                     {
                         float rotateSpeed = 20f;
-                        if(Input.GetKey(KeyCode.LeftShift))
+                        if (Input.GetKey(KeyCode.LeftShift))
                         {
                             rotateSpeed = 100f;
                         }
@@ -173,7 +178,7 @@ namespace ThreeDPool.Controllers
 
                         if (GameManager.Instance.CurrGameState == GameManager.GameState.Play)
                         {
-                            StartCoroutine(MoveCueAfterStrike(transform.position, _cueBall.transform.position - transform.forward * _defaultDistFromCueBall * 1.5f, 1.0f));
+                            StartCoroutine(MoveCueAfterStrike(transform.position, _cueBall.transform.position - transform.forward * _defaultDistFromCueBall * 1.5f, 0.5f));
                         }
 
                         transform.LookAt(_cueBall);

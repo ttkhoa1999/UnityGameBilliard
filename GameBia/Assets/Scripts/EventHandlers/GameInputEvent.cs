@@ -8,7 +8,10 @@ namespace ThreeDPool.EventHandlers
             HorizontalAxisMovement,
             VerticalAxisMovement,
             Release,
-            Paused
+            Paused,
+            SpinEffectChoice,
+            HorizontalPointMovement,
+            VerticalPointMovement
         }
 
         public float axisOffset;

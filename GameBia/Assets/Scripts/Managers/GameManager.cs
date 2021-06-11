@@ -25,7 +25,8 @@ namespace ThreeDPool.Managers
             GetSet,
             Play,
             Pause,
-            Complete
+            Complete,
+            SpinEffectChoice
         }
 
         [SerializeField]
@@ -84,7 +85,6 @@ namespace ThreeDPool.Managers
             _ballsHitOut = new List<CueBallController>(arraySize);
 
             _gameUIScreen.CreatePlayerUI();
-
         }
 
         private void PlaceBallBasedOnGameType()
@@ -183,7 +183,7 @@ namespace ThreeDPool.Managers
 
             foreach (var player in _players)
             {
-                player.SetPlayingState((player == _players.Peek()));
+                player.SetPlayingState(player == _players.Peek());
             }
 
             if (IsGameComplete())
@@ -235,6 +235,11 @@ namespace ThreeDPool.Managers
             ChangeGameState(GameState.Pause);
         }
 
+        public void OnSpinEffectChoice()
+        {
+            ChangeGameState(GameState.SpinEffectChoice);
+        }
+
         public void OnContinue()
         {
             ChangeGameState(GameState.Play);
@@ -266,7 +271,7 @@ namespace ThreeDPool.Managers
         }
 
         public void AddToBallHitOutList(CueBallController ball) 
-        { 
+        {
             if (!_ballsHitOut.Contains(ball) && !_ballsPocketed.Contains(ball))
                 _ballsHitOut.Add(ball);
         }

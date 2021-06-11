@@ -32,6 +32,10 @@ namespace ThreeDPool.Controllers
         [SerializeField]
         CueBallType _ballType = CueBallType.White;
 
+        private GameObject _point;
+
+        private Vector3 _defaultPointPosition;
+
         private CueBallActionEvent.States _currState;
 
         private Vector3 _initialPos;
@@ -40,10 +44,15 @@ namespace ThreeDPool.Controllers
 
         public CueBallType BallType { get { return _ballType; } }
 
+        private bool _spinEffect = false;
+
+        private Vector3 cueBallVelocity;
 
         private void Start()
         {
             _initialPos = transform.position;
+            _point = GameObject.Find("Point");
+            _defaultPointPosition = _point.transform.localPosition;
 
             EventManager.Subscribe(typeof(CueBallActionEvent).Name, OnCueBallEvent);
             EventManager.Subscribe(typeof(GameStateEvent).Name, OnGameStateEvent);
@@ -122,11 +131,33 @@ namespace ThreeDPool.Controllers
                 GameManager.Instance.AddToBallHitOutList(this);
             }
 
-            if(collision.gameObject.tag == "ColorBall")
+            if(_ballType == CueBallType.White && _spinEffect == true)
             {
-                var vector = gameObject.GetComponent<Rigidbody>().velocity;
+                GameObject cueHead = GameObject.Find("CueHead");
+                Rigidbody rigidBody = gameObject.GetComponent<Rigidbody>();
+                var spinEffectController = _point.GetComponent<SpinEffectController>();
+                var cueController = GameObject.Find("CueParent").GetComponent<CueController>();
 
-                gameObject.GetComponent<Rigidbody>().velocity = new Vector3(vector.x, vector.y, vector.z) * 1.13f;
+                float spinForce = spinEffectController.GetSpinForceBySpinRatioAndForceGathered(cueController.ForceGatheredToHit);
+                var spinType = spinEffectController.GetSpinType();
+
+                if (collision.gameObject.tag == "Border" || collision.gameObject.tag == "ColorBall")
+                {
+                    switch (spinType)
+                    {
+                        case SpinEffectController.SpinType.BackSpin:
+                            rigidBody.AddTorque(-cueHead.transform.forward * spinForce);
+                            rigidBody.AddForceAtPosition(-cueHead.transform.forward * spinForce, transform.position, ForceMode.Acceleration);
+                            break;
+
+                        case SpinEffectController.SpinType.TopSpin:
+                            rigidBody.AddTorque(cueHead.transform.forward * spinForce);
+                            rigidBody.AddForceAtPosition(cueHead.transform.forward * spinForce, transform.position, ForceMode.Acceleration);
+                            break;
+                    }
+                }
+
+                _spinEffect = false;
             }
         }
 
@@ -157,6 +188,11 @@ namespace ThreeDPool.Controllers
                 GameManager.Instance.ReadyForNextRound();
 
                 _currState = CueBallActionEvent.States.Stationary;
+
+                if(_point.transform.localPosition != _defaultPointPosition)
+                {
+                    _point.transform.localPosition = _defaultPointPosition;
+                }
             }
             else
             {
@@ -164,7 +200,7 @@ namespace ThreeDPool.Controllers
             }
 
             var v = rigidbody.velocity.normalized;
-            if (rigidbody.velocity.magnitude > 1.5f && rigidbody.angularVelocity.magnitude < 1)
+            if (rigidbody.velocity.magnitude > 0.7f)
             {
                 rigidbody.angularVelocity = new Vector3(v.z, 0, -v.x) * rigidbody.velocity.magnitude;
             }
@@ -174,12 +210,20 @@ namespace ThreeDPool.Controllers
         {
             if (_ballType == CueBallType.White)
             {
+                Vector3 pos = _point.transform.localPosition;
+                if (pos.x != 0 && pos.y != 0)
+                {
+                    _spinEffect = true;
+                }
+
                 GameManager.Instance.NumOfBallsStriked++;
 
                 Rigidbody rigidBody = gameObject.GetComponent<Rigidbody>();
-                rigidBody.AddForce(Camera.main.transform.forward * _force * forceGathered, ForceMode.Force);
 
-                var rigidbody = gameObject.GetComponent<Rigidbody>();
+                StopBall(gameObject);
+                var cueHead = GameObject.Find("CueHead");
+
+                rigidBody.AddForce(cueHead.transform.forward * _force * forceGathered, ForceMode.Force);
             }
         }
 
@@ -198,12 +242,20 @@ namespace ThreeDPool.Controllers
         public void PlaceBallInInitialPos()
         {
 
-            transform.position = new Vector3(_initialPos.x, _initialPos.y + 0.2f, _initialPos.z);
+            transform.position = new Vector3(_initialPos.x, _initialPos.y + 0.01f, _initialPos.z);
 
             IsPocketedInPrevTurn = false;
 
             _currState = CueBallActionEvent.States.Placing;
             GameManager.Instance.NumOfBallsStriked = 0;
+        }
+
+        public void StopBall(GameObject ball)
+        {
+            Rigidbody rigidbody = ball.GetComponent<Rigidbody>();
+
+            rigidbody.velocity = Vector3.zero;
+            rigidbody.angularVelocity = Vector3.zero;
         }
     }
 }

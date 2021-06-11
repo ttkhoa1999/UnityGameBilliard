@@ -6,6 +6,18 @@ namespace ThreeDPool.Controllers
 {
     class InputController : MonoBehaviour 
     {
+        GameObject _cueBall = null;
+        GameObject _point = null;
+        GameObject _sphereTrigger = null;
+
+        private void Start()
+        {
+            _cueBall = GameObject.Find("CueBall");
+            _point = GameObject.Find("Point");
+            _sphereTrigger = GameObject.Find("SphereTrigger");
+        }
+
+
         private void Update()
         {
             if (Input.GetKey(KeyCode.Escape))
@@ -13,12 +25,36 @@ namespace ThreeDPool.Controllers
                 EventManager.Notify(typeof(GameInputEvent).Name, this, new GameInputEvent() { State = GameInputEvent.States.Paused });
             }
 
+            if (Input.GetKey(KeyCode.Space) && _cueBall.GetComponent<Rigidbody>().IsSleeping() &&
+                _cueBall.transform.position.y > 16)
+            {
+                EventManager.Notify(typeof(GameInputEvent).Name, this, new GameInputEvent() { State = GameInputEvent.States.SpinEffectChoice });
+            }
+
             if (GameManager.Instance.CurrGameState == GameManager.GameState.GetSet ||
                 GameManager.Instance.CurrGameState == GameManager.GameState.Pause)
                 return;
 
-            float x = 0.0f;
+            float x = 0f;
             float y = 0f;
+
+            if (GameManager.Instance.CurrGameState == GameManager.GameState.SpinEffectChoice)
+            {
+                if (Input.GetMouseButton(0))
+                {
+                    x = Input.GetAxis("Mouse X");
+                    y = Input.GetAxis("Mouse Y");
+                }
+
+                if (x != 0.0f)
+                    EventManager.Notify(typeof(GameInputEvent).Name, this, new GameInputEvent() { State = GameInputEvent.States.HorizontalPointMovement, axisOffset = x });
+
+                if (y != 0.0f)
+                    EventManager.Notify(typeof(GameInputEvent).Name, this, new GameInputEvent() { State = GameInputEvent.States.VerticalPointMovement, axisOffset = y });
+
+                return;
+            }
+            
             if (Input.GetMouseButton(0))
             {
                 x = Input.GetAxis("Mouse X") - Input.GetAxis("Horizontal");
